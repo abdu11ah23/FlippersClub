@@ -5,6 +5,7 @@ const initGameSocket = (io) => {
     console.log('User connected:', socket.id);
 
     socket.on('join_game', ({ roomId, username }) => {
+      console.log(`User ${username} (${socket.id}) attempting to join room: ${roomId}`);
       let room = rooms.get(roomId);
 
       if (!room) {
@@ -30,8 +31,10 @@ const initGameSocket = (io) => {
           room.gameState = 'playing';
           room.turn = room.players[0].id;
           room.cards = generateCards(room.level);
+          console.log(`Game starting in room ${roomId}`);
           io.to(roomId).emit('game_start', room);
         } else {
+          console.log(`Waiting for opponent in room ${roomId}`);
           socket.emit('waiting_for_opponent');
         }
       } else {
