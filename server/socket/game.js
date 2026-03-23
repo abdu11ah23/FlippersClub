@@ -13,7 +13,6 @@ const initGameSocket = (io) => {
           id: roomId,
           players: [],
           gameState: 'waiting',
-          level: 1,
           cards: [],
           scores: {},
           turn: null,
@@ -30,7 +29,7 @@ const initGameSocket = (io) => {
         if (room.players.length === 2) {
           room.gameState = 'playing';
           room.turn = room.players[0].id;
-          room.cards = generateCards(room.level);
+          room.cards = generateCards();
           console.log(`Game starting in room ${roomId}`);
           io.to(roomId).emit('game_start', room);
         } else {
@@ -68,20 +67,13 @@ const initGameSocket = (io) => {
             matchedIndices: [first.index, second.index]
           });
 
-          // Check if level complete
+          // Check if game complete
           if (room.cards.every(c => c.matched)) {
-            if (room.level < 5) {
-              room.level += 1;
-              room.cards = generateCards(room.level);
-              room.flippedCards = [];
-              io.to(roomId).emit('level_up', { level: room.level, cards: room.cards });
-            } else {
               const winner = room.players.reduce((prev, curr) => 
                 room.scores[curr.id] > room.scores[prev.id] ? curr : prev
               );
               io.to(roomId).emit('game_over', { winner, scores: room.scores });
               rooms.delete(roomId);
-            }
           }
         } else {
           // No match
@@ -118,18 +110,9 @@ const initGameSocket = (io) => {
   });
 };
 
-const generateCards = (level) => {
-  const pairs = (level + 1) * 2; // Level 1: 4 cards, Level 2: 6 cards, etc.
-  // Wait, prompt said 5 progressive levels. Let's make it more challenging.
-  // Level 1: 2x2 (2 pairs)
-  // Level 2: 2x3 (3 pairs) -> maybe 4x3?
-  // Let's go with: 2x2, 2x4, 4x4, 4x5, 6x6 pairs.
-  const levels = [2, 4, 8, 12, 18]; // Number of pairs
-  const numPairs = levels[level - 1];
-  const values = [];
-  for (let i = 1; i <= numPairs; i++) {
-    values.push(i, i);
-  }
+const generateCards = () => {
+  const emojis = ['🔥', '💎', '🚀', '⭐', '🍀', '🍎', '🍕', '⚽', '🎸', '🎮'];
+  const values = [...emojis, ...emojis];
   return values
     .sort(() => Math.random() - 0.5)
     .map((val, index) => ({ id: index, value: val, matched: false }));

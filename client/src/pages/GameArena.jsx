@@ -73,69 +73,50 @@ const GameArena = () => {
       }, 1000);
     });
 
-    newSocket.on('level_up', ({ level, cards }) => {
-      setLevel(level);
-      setCards(cards);
-      setFlippedIndices([]);
-    });
-
     newSocket.on('receive_message', (msg) => {
       setMessages(prev => [...prev, msg]);
+      // If chat is closed, maybe show a notification?
     });
 
     newSocket.on('game_over', ({ winner, scores }) => {
       setWinner(winner);
+      setScores(scores);
       setGameState('over');
+    });
+
+    newSocket.on('opponent_left', () => {
+      setGameState('waiting');
+      setCards([]);
+      setRoomData(null);
     });
 
     return () => newSocket.close();
   }, [roomId, user.username]);
 
-  const handleFlip = (cardIndex) => {
-    if (gameState !== 'playing' || turn !== socket.id || flippedIndices.length >= 2) return;
-    socket.emit('flip_card', { roomId, cardIndex });
+  const handleCardClick = (index) => {
+    if (gameState !== 'playing' || turn !== socket.id || flippedIndices.length >= 2 || matchedIndices.includes(index) || flippedIndices.includes(index)) return;
+    socket.emit('flip_card', { roomId, cardIndex: index });
   };
 
   const sendMessage = (e) => {
     e.preventDefault();
-    if (message.trim()) {
-      socket.emit('send_message', { roomId, message, username: user.username });
-      setMessage('');
-    }
+    if (!message.trim()) return;
+    socket.emit('send_message', { roomId, message, username: user.username });
+    setMessage('');
   };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const rival = roomData?.players.find(p => p.id !== socket?.id);
+
   if (gameState === 'waiting') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
-        <div className="p-12 glass animate-pulse flex flex-col items-center max-w-lg w-full">
-          <div className="w-20 h-20 rounded-full bg-primary-500/20 flex items-center justify-center mb-6">
-            <Timer size={40} className="text-primary-400" />
-          </div>
+      <div className="min-h-screen flex items-center justify-center p-6 bg-slate-950">
+        <div className="max-w-md w-full glass p-10 flex flex-col items-center text-center animate-fade-in shadow-2xl">
+          <div className="w-20 h-20 rounded-full border-4 border-slate-800 border-t-primary-500 animate-spin mb-8"></div>
           <h2 className="text-3xl font-bold mb-2">Joining Arena...</h2>
-          <p className="text-slate-400 mb-8">Waiting for a worthy opponent to join room <span className="font-mono text-primary-400">#{roomId}</span></p>
-          <button 
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft size={18} />
-            Back to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (gameState === 'over') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center overflow-hidden">
-        <div className="relative p-12 glass shadow-2xl shadow-primary-500/20 max-w-lg w-full z-10 animate-fade-in">
-          <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full bg-yellow-500 flex items-center justify-center border-8 border-slate-950 shadow-xl">
-            <Trophy size={48} className="text-slate-900" />
-          </div>
           <h2 className="text-4xl font-bold mt-8 mb-2">Battle Result</h2>
           <p className="text-slate-400 mb-8">Level {level} reached</p>
           
