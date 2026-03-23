@@ -125,44 +125,68 @@ const GameArena = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-950 overflow-hidden">
+    <div className="flex flex-col h-screen bg-slate-950 overflow-hidden relative">
+      
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+         <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary-600/20 rounded-full blur-[120px] animate-pulse"></div>
+         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-emerald-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+         
+         {/* Floating Emojis */}
+         {['🔥', '💎', '🚀', '⭐', '🍀'].map((emoji, i) => (
+           <motion.div
+             key={i}
+             className="absolute text-4xl opacity-10 grayscale hover:grayscale-0 transition-all cursor-default"
+             initial={{ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight }}
+             animate={{ 
+               y: [null, Math.random() * 500, Math.random() * 200],
+               rotate: [0, 360],
+               scale: [1, 1.2, 1]
+             }}
+             transition={{ duration: 10 + i * 5, repeat: Infinity, ease: 'linear' }}
+           >
+             {emoji}
+           </motion.div>
+         ))}
+      </div>
+
       {/* Header */}
-      <header className="px-4 py-3 flex items-center justify-between bg-slate-900/50 backdrop-blur-md border-b border-white/5 z-20">
+      <header className="px-4 py-3 flex items-center justify-between bg-slate-900/40 backdrop-blur-2xl border-b border-white/5 z-20">
         <button onClick={() => navigate('/lobby')} className="p-2 hover:bg-white/10 rounded-full transition-colors">
           <ArrowLeft size={20} />
         </button>
 
         <div className="flex items-center gap-4">
           {/* My Stats */}
-          <div className={`px-4 py-1.5 rounded-full flex items-center gap-2 border transition-all ${turn === socket?.id ? 'bg-primary-500/10 border-primary-500/50 scale-105 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'bg-slate-800/50 border-white/5'}`}>
-            <span className="text-[10px] font-black text-slate-500 uppercase">YOU</span>
+          <div className={`px-4 py-1.5 rounded-full flex items-center gap-2 border transition-all ${turn === socket?.id ? 'bg-primary-500/10 border-primary-500/50 scale-105 shadow-[0_0_20px_rgba(59,130,246,0.2)]' : 'bg-slate-800/50 border-white/5'}`}>
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">YOU</span>
             <span className="font-mono text-xl font-black">{scores[socket?.id] || 0}</span>
           </div>
 
-          <div className="text-slate-700 font-black italic scale-75">VS</div>
+          <div className="text-slate-800 font-black italic scale-75">VS</div>
 
           {/* Opponent Stats */}
-          <div className={`px-4 py-1.5 rounded-full flex items-center gap-2 border transition-all ${turn !== socket?.id ? 'bg-amber-500/10 border-amber-500/50 scale-105 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-slate-800/50 border-white/5'}`}>
+          <div className={`px-4 py-1.5 rounded-full flex items-center gap-2 border transition-all ${turn !== socket?.id ? 'bg-amber-500/10 border-amber-500/50 scale-105 shadow-[0_0_20px_rgba(245,158,11,0.2)]' : 'bg-slate-800/50 border-white/5'}`}>
             <span className="font-mono text-xl font-black">{scores[rival?.id] || 0}</span>
-            <span className="text-[10px] font-black text-slate-500 uppercase truncate max-w-[60px]">{rival?.username || 'Rival'}</span>
+            <span className="text-[10px] font-black text-slate-500 uppercase truncate max-w-[50px]">{rival?.username || 'Rival'}</span>
           </div>
         </div>
 
         <button 
           onClick={() => setIsChatOpen(!isChatOpen)}
-          className={`p-2 rounded-xl transition-all relative ${isChatOpen ? 'bg-primary-500 text-white' : 'bg-slate-800/50 hover:bg-slate-800 text-slate-400'}`}
+          className={`p-2 rounded-xl transition-all relative ${isChatOpen ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' : 'bg-slate-800/50 hover:bg-slate-800 text-slate-400'}`}
         >
           <MessageSquare size={20} />
           {!isChatOpen && messages.length > 0 && (
-             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-950"></span>
+             <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-slate-950 animate-bounce"></span>
           )}
         </button>
       </header>
 
       {/* Main Game Area */}
-      <main className="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-center">
+      <main className="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-center z-10">
         <div className="max-w-2xl w-full">
-           <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 sm:gap-4 mb-8">
+           <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-8">
               {cards.map((card, index) => (
                 <MemoryCard
                   key={card.id}
@@ -175,14 +199,18 @@ const GameArena = () => {
            
            <div className="flex flex-col items-center text-center">
               {turn === socket?.id ? (
-                <div className="flex items-center gap-2 text-primary-400 font-black bg-primary-500/10 px-8 py-3 rounded-2xl border border-primary-500/30 animate-pulse uppercase tracking-wider text-sm shadow-lg shadow-primary-500/10">
-                  <Sparkles size={18} />
-                  <span>Your Turn</span>
-                </div>
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-3 text-primary-400 font-black bg-primary-500/10 px-8 py-3.5 rounded-2xl border border-primary-500/30 shadow-lg shadow-primary-500/10 text-xs tracking-[0.2em] uppercase"
+                >
+                  <Sparkles size={18} className="animate-pulse" />
+                  <span>Your Match</span>
+                </motion.div>
               ) : (
-                <div className="flex items-center gap-2 text-slate-500 font-bold bg-slate-900/50 px-8 py-3 rounded-2xl border border-white/5 uppercase tracking-wider text-sm">
+                <div className="flex items-center gap-2 text-slate-500 font-bold bg-slate-900/50 px-8 py-3.5 rounded-2xl border border-white/5 text-xs tracking-[0.2em] uppercase">
                   <Timer size={18} className="animate-pulse" />
-                  <span>{rival?.username}'s Turn</span>
+                  <span>{rival?.username}'s Move</span>
                 </div>
               )}
            </div>
@@ -190,7 +218,7 @@ const GameArena = () => {
       </main>
 
       {/* Chat Sidebar/Overlay */}
-      <div className={`fixed inset-y-0 right-0 w-full sm:w-80 bg-slate-950/95 backdrop-blur-2xl border-l border-white/5 shadow-2xl transition-transform duration-300 ease-in-out z-30 flex flex-col ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed inset-y-0 right-0 w-full sm:w-80 bg-slate-950/98 backdrop-blur-3xl border-l border-white/5 shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] z-30 flex flex-col ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}`}>
          <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-900/50">
             <div className="flex items-center gap-2 font-black text-xs tracking-[0.2em] text-slate-400">
                <MessageSquare size={16} className="text-primary-500" />
