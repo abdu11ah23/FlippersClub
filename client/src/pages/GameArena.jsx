@@ -24,7 +24,8 @@ const GameArena = () => {
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const newSocket = io(serverUrl);
     setSocket(newSocket);
 
     newSocket.emit('join_game', { roomId, username: user.username });
