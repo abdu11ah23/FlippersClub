@@ -24,7 +24,7 @@ const GameArena = () => {
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const serverUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').trim();
     console.log('Connecting to server:', serverUrl);
     const newSocket = io(serverUrl);
     setSocket(newSocket);
