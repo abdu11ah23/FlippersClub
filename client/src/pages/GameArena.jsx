@@ -25,12 +25,25 @@ const GameArena = () => {
 
   useEffect(() => {
     const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    console.log('Connecting to server:', serverUrl);
     const newSocket = io(serverUrl);
     setSocket(newSocket);
 
-    newSocket.emit('join_game', { roomId, username: user.username });
+    newSocket.on('connect', () => {
+      console.log('Connected to socket server!');
+      newSocket.emit('join_game', { roomId, username: user.username });
+    });
+
+    newSocket.on('connect_error', (err) => {
+      console.error('Socket connection error:', err);
+    });
+
+    newSocket.on('error', (err) => {
+      console.error('Game error:', err);
+    });
 
     newSocket.on('game_start', (data) => {
+      console.log('Game started!', data);
       setRoomData(data);
       setCards(data.cards);
       setScores(data.scores);
